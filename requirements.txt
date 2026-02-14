@@ -1,0 +1,7 @@
+ultralytics==8.1.0
+opencv-python==4.9.0
+streamlit==1.30.0
+supervision==0.18.0
+numpy==1.26.0
+pandas==2.1.0
+Pillow==10.2.0
