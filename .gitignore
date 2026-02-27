@@ -1,0 +1,32 @@
+# Virtual Environment - NEVER push this
+traffic_env/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# AI Model weights (too large)
+*.pt
+*.onnx
+*.engine
+
+# Video/Image files (too large)
+*.mp4
+*.avi
+*.mov
+*.jpg
+*.jpeg
+*.png
+
+# Mac system files
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
