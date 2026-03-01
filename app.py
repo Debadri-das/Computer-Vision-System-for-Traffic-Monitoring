@@ -13,7 +13,7 @@ import os
 # Page config
 st.set_page_config(
     page_title="AI Traffic Monitor",
-    page_icon="🚦",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -254,14 +254,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============ HERO SECTION ============
-st.markdown('<h1 class="hero-text">🚦 AI TRAFFIC MONITOR</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="hero-text">AI TRAFFIC MONITOR</h1>', unsafe_allow_html=True)
 st.markdown('<p class="hero-subtitle">Command Center • Real-Time Analytics • Smart City Intelligence</p>', unsafe_allow_html=True)
 
 # Animated separator
 st.markdown("---")
 
 # ============ LIVE STATS BAR ============
-st.markdown('<h2 class="section-header">📊 LIVE STATISTICS</h2>', unsafe_allow_html=True)
+st.markdown('<h2 class="section-header">LIVE STATISTICS</h2>', unsafe_allow_html=True)
 
 # Initialize sample data (will be real from detector)
 if 'live_stats' not in st.session_state:
@@ -277,7 +277,7 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown(f"""
     <div class="stat-card">
-        <div class="stat-label">🚗 VEHICLES DETECTED</div>
+        <div class="stat-label">VEHICLES DETECTED</div>
         <div class="stat-value">{st.session_state.live_stats['vehicles_detected']}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -285,7 +285,7 @@ with col1:
 with col2:
     st.markdown(f"""
     <div class="stat-card">
-        <div class="stat-label">⚡ AVG SPEED</div>
+        <div class="stat-label">AVG SPEED</div>
         <div class="stat-value">{st.session_state.live_stats['avg_speed']:.1f}</div>
         <span style="color: #00d9ff; font-size: 0.8em;">km/h</span>
     </div>
@@ -294,7 +294,7 @@ with col2:
 with col3:
     st.markdown(f"""
     <div class="stat-card">
-        <div class="stat-label">⚠️ INCIDENTS</div>
+        <div class="stat-label">INCIDENTS</div>
         <div class="stat-value">{st.session_state.live_stats['incidents']}</div>
     </div>
     """, unsafe_allow_html=True)
@@ -302,7 +302,7 @@ with col3:
 with col4:
     st.markdown(f"""
     <div class="stat-card">
-        <div class="stat-label">🔴 CONGESTION</div>
+        <div class="stat-label">CONGESTION</div>
         <div class="stat-value">{st.session_state.live_stats['congestion']}%</div>
     </div>
     """, unsafe_allow_html=True)
@@ -315,9 +315,9 @@ st.markdown('<h2 class="section-header">✨ CORE FEATURES</h2>', unsafe_allow_ht
 col1, col2, col3 = st.columns(3)
 
 features = [
-    {"icon": "🎯", "title": "Real-Time Detection", "desc": "YOLOv8 powered multi-object detection with sub-10ms latency"},
-    {"icon": "📈", "title": "Speed Analysis", "desc": "Accurate vehicle speed calculation using optical flow tracking"},
-    {"icon": "🚨", "title": "Incident Alerts", "desc": "Automatic detection of accidents, violations & anomalies"},
+    {"icon": "", "title": "Real-Time Detection", "desc": "YOLOv8 powered multi-object detection with sub-10ms latency"},
+    {"icon": "", "title": "Speed Analysis", "desc": "Accurate vehicle speed calculation using optical flow tracking"},
+    {"icon": "", "title": "Incident Alerts", "desc": "Automatic detection of accidents, violations & anomalies"},
     {"icon": "🔍", "title": "License Plate Recognition", "desc": "OCR-based plate identification for vehicle tracking"},
     {"icon": "🗺️", "title": "Heatmap Analytics", "desc": "Spatial visualization of traffic density & patterns"},
     {"icon": "🤖", "title": "AI Predictions", "desc": "Machine learning forecasts for congestion & flow patterns"}
@@ -374,7 +374,7 @@ st.markdown("---")
 # ============ DASHBOARD PREVIEW & LIVE MONITORING ============
 st.markdown('<h2 class="section-header">📡 DASHBOARD & MONITORING</h2>', unsafe_allow_html=True)
 
-tab1, tab2, tab3, tab4 = st.tabs(["🎬 Live Feed", "📊 Analytics", "🗺️ Map View", "🚨 Alerts"])
+tab1, tab2, tab3, tab4 = st.tabs(["Live Feed", "Analytics", "Map View", "Alerts"])
 
 # Session state
 if 'monitoring' not in st.session_state:
@@ -392,57 +392,91 @@ with tab1:
         st.session_state.selected_video = None
     if 'video_source' not in st.session_state:
         st.session_state.video_source = None
+    if 'camera_enabled' not in st.session_state:
+        st.session_state.camera_enabled = False
     
-    # Find local video files
-    local_video_files = []
-    video_extensions = ('.mp4', '.avi', '.mov', '.mkv')
-    for file in os.listdir('.'):
-        if file.lower().endswith(video_extensions):
-            local_video_files.append(file)
-    
-    # Video file upload
-    st.markdown("**📁 Upload Video(s)**")
-    uploaded_files = st.file_uploader(
-        "Choose video file(s) at least one video (MP4, AVI, MOV, MKV)",
-        type=['mp4', 'avi', 'mov', 'mkv'],
-        accept_multiple_files=True,
-        key="video_uploader"
+    # Input source selection
+    input_mode = st.radio(
+        "Select Input Source",
+        ["Upload Video File", "Use Device Camera", "Local Videos"],
+        horizontal=True
     )
     
-    if uploaded_files:
-        st.session_state.uploaded_videos = uploaded_files
-    
-    # Combine local and uploaded videos
-    all_videos = []
-    video_labels = []
-    
-    # Add local videos
-    for idx, local_video in enumerate(local_video_files):
-        all_videos.append(('local', local_video))
-        video_labels.append(f"📂 {local_video}")
-    
-    # Add uploaded videos
-    if st.session_state.uploaded_videos:
-        for idx, uploaded_video in enumerate(st.session_state.uploaded_videos):
-            all_videos.append(('uploaded', uploaded_video))
-            video_labels.append(f"⬆️ {uploaded_video.name}")
-    
-    if all_videos:
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            selected_idx = st.selectbox(
-                "Select a video to analyze",
-                range(len(all_videos)),
-                format_func=lambda i: video_labels[i],
-                key="video_selector"
-            )
-            video_type, selected_file = all_videos[selected_idx]
-            st.session_state.selected_video = selected_file
-            st.session_state.video_source = video_type
+    # Handle camera input
+    if input_mode == "Use Device Camera":
+        st.info("Allow camera access when prompted by your browser")
+        camera_frame = st.camera_input("📷 Take a picture or allow continuous camera access")
         
-        # Display video info
-        source_emoji = "📂" if st.session_state.video_source == 'local' else "⬆️"
-        st.info(f"{source_emoji} Selected: {selected_file.name if hasattr(selected_file, 'name') else selected_file}")
+        if camera_frame is not None:
+            st.session_state.camera_enabled = True
+            st.session_state.selected_video = camera_frame
+            st.session_state.video_source = "camera"
+            st.success("Camera access granted! Click 'Start Monitoring' to begin.")
+        else:
+            st.warning("Waiting for camera permission... Click the camera button above.")
+    
+    # Handle file upload
+    elif input_mode == "Upload Video File":
+        st.markdown("**Upload Video(s)**")
+        uploaded_files = st.file_uploader(
+            "Choose video file(s) at least one video (MP4, AVI, MOV, MKV)",
+            type=['mp4', 'avi', 'mov', 'mkv'],
+            accept_multiple_files=True,
+            key="video_uploader"
+        )
+        
+        if uploaded_files:
+            st.session_state.uploaded_videos = uploaded_files
+        
+        # Show uploaded videos
+        if st.session_state.uploaded_videos:
+            all_videos = []
+            video_labels = []
+            
+            for idx, uploaded_video in enumerate(st.session_state.uploaded_videos):
+                all_videos.append(('uploaded', uploaded_video))
+                video_labels.append(f"⬆️ {uploaded_video.name}")
+            
+            if all_videos:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    selected_idx = st.selectbox(
+                        "Select a video to analyze",
+                        range(len(all_videos)),
+                        format_func=lambda i: video_labels[i],
+                        key="video_selector"
+                    )
+                    video_type, selected_file = all_videos[selected_idx]
+                    st.session_state.selected_video = selected_file
+                    st.session_state.video_source = video_type
+                
+                st.info(f"Selected: {selected_file.name}")
+    
+    # Handle local videos
+    else:
+        # Find local video files
+        local_video_files = []
+        video_extensions = ('.mp4', '.avi', '.mov', '.mkv')
+        for file in os.listdir('.'):
+            if file.lower().endswith(video_extensions):
+                local_video_files.append(file)
+        
+        if local_video_files:
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                selected_idx = st.selectbox(
+                    "Select a local video to analyze",
+                    range(len(local_video_files)),
+                    format_func=lambda i: f"📂 {local_video_files[i]}",
+                    key="local_video_selector"
+                )
+                selected_file = local_video_files[selected_idx]
+                st.session_state.selected_video = selected_file
+                st.session_state.video_source = 'local'
+            
+            st.info(f"Selected: {selected_file}")
+        else:
+            st.warning("No local video files found in the directory.")
     
     video_placeholder = st.empty()
     
@@ -463,36 +497,39 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        start_button = st.button("🚀 Start Monitoring", key="start", type="primary", disabled=(st.session_state.selected_video is None))
+        start_button = st.button("Start Monitoring", key="start", type="primary", disabled=(st.session_state.selected_video is None and st.session_state.video_source != 'camera'))
     with col2:
-        stop_button = st.button("⏹️ Stop", key="stop")
+        stop_button = st.button("Stop", key="stop")
     
     if start_button:
         st.session_state.monitoring = True
     if stop_button:
         st.session_state.monitoring = False
     
-    if st.session_state.monitoring and st.session_state.selected_video is not None:
+    if st.session_state.monitoring:
         if st.session_state.monitor is None:
-            with st.spinner("🔄 Loading AI model..."):
+            with st.spinner("Loading AI model..."):
                 st.session_state.monitor = TrafficMonitor()
         
-        # Handle both local and uploaded videos
-        if st.session_state.video_source == 'local':
+        # Handle camera, local, and uploaded videos
+        if st.session_state.video_source == 'camera':
+            cap = cv2.VideoCapture(0)  # 0 is the default camera device
+            video_name = "Device Camera"
+        elif st.session_state.video_source == 'local':
             video_path = st.session_state.selected_video
             video_name = st.session_state.selected_video
+            cap = cv2.VideoCapture(video_path)
         else:
             # Save uploaded file temporarily
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                 tmp_file.write(st.session_state.selected_video.read())
                 video_path = tmp_file.name
             video_name = st.session_state.selected_video.name
+            cap = cv2.VideoCapture(video_path)
         
         try:
-            cap = cv2.VideoCapture(video_path)
-            
             if not cap.isOpened():
-                st.error("❌ Cannot open video!")
+                st.error("Cannot open camera or video!")
                 st.session_state.monitoring = False
             else:
                 success_placeholder = st.empty()
@@ -505,13 +542,18 @@ with tab1:
                 frame_delay = 1 / video_fps  # Time between frames in seconds
                 last_frame_time = time.time()
                 
-                success_placeholder.success(f"✅ Monitoring active! Playing: {video_name} @ {video_fps:.1f} FPS")
+                success_placeholder.success(f"Monitoring active! Playing: {video_name} @ {video_fps:.1f} FPS")
                 
                 frame_count = 0
                 while st.session_state.monitoring and cap.isOpened():
                     ret, frame = cap.read()
                     
                     if not ret:
+                        # For camera input, break the loop if stream ends
+                        if st.session_state.video_source == 'camera':
+                            st.warning("Camera stream ended")
+                            break
+                        # For video files, loop back to beginning
                         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         continue
                     
@@ -524,10 +566,10 @@ with tab1:
                     # Display frame and metrics
                     video_placeholder.image(rgb_frame, channels="RGB", use_column_width=True)
                     
-                    fps_metric.metric("🎯 FPS", f"{stats['fps']:.1f}")
-                    active_metric.metric("🚗 Active", stats['active_vehicles'])
-                    in_metric.metric("⬇️ Entered", stats['total_in'])
-                    out_metric.metric("⬆️ Exited", stats['total_out'])
+                    fps_metric.metric("FPS", f"{stats['fps']:.1f}")
+                    active_metric.metric("Active", stats['active_vehicles'])
+                    in_metric.metric("Entered", stats['total_in'])
+                    out_metric.metric("Exited", stats['total_out'])
                     
                     st.session_state.live_stats['vehicles_detected'] = stats['active_vehicles']
                     
@@ -545,17 +587,15 @@ with tab1:
                         break
                 
                 cap.release()
-                success_placeholder.info("⏹️ Monitoring stopped")
+                success_placeholder.info("Monitoring stopped")
         finally:
             # Clean up temporary file if it was an uploaded video
-            if st.session_state.video_source == 'uploaded' and os.path.exists(video_path):
-                os.remove(video_path)
-    elif st.session_state.monitoring and st.session_state.selected_video is None:
-        st.error("❌ Please select a video first!")
-        st.session_state.monitoring = False
+            if st.session_state.video_source == 'uploaded':
+                if 'video_path' in locals() and os.path.exists(video_path):
+                    os.remove(video_path)
     else:
-        if local_video_files:
-            st.info("👈 Select a video and click 'Start Monitoring' to begin")
+        if st.session_state.video_source != 'camera':
+            st.info("Select a video and click 'Start Monitoring' to begin")
         else:
             st.info("👈 Upload video(s) and click 'Start Monitoring' to begin")
 
@@ -660,7 +700,7 @@ st.markdown("---")
 # ============ FOOTER ============
 st.markdown("""
 <div class="footer">
-    <p>🚦 AI Traffic Monitoring System | Powered by YOLOv8 & Streamlit</p>
+    <p>AI Traffic Monitoring System | Powered by YOLOv8 & Streamlit</p>
     <p>© 2025 Smart City Analytics. All Rights Reserved.</p>
     <p style="margin-top: 20px; color: #00d9ff; letter-spacing: 2px;">[ LIVE COMMAND CENTER ]</p>
 </div>

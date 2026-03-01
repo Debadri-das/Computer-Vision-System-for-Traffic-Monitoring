@@ -129,11 +129,22 @@ class TrafficMonitor:
         """
         Calculate estimated speed for each vehicle based on movement between frames.
         Returns dictionary mapping tracker_id to speed in km/h
+        
+        IMPROVEMENTS FOR ACCURACY:
+        - Minimum movement threshold to filter detection jitter
+        - Deadzone for low speeds to avoid showing 2-3 km/h for idle vehicles
+        - Stricter smoothing that favors zero speed when movement is minimal
+        - Better pixels_per_meter calibration (8 px/m for typical highway cameras)
         """
         speeds = {}
         
         if fps <= 0:
             fps = 30  # Default FPS if calculation fails
+        
+        # Calibration parameters
+        MIN_PIXEL_MOVEMENT = 2.5  # Minimum pixels to register as actual movement (filters jitter)
+        SPEED_DEADZONE = 0.8  # km/h - speeds below this are treated as 0 (stationary)
+        pixels_per_meter = 8  # Improved calibration (was 10)
         
         for i, tracker_id in enumerate(detections.tracker_id):
             tracker_id = int(tracker_id)
@@ -150,16 +161,27 @@ class TrafficMonitor:
                 
                 pixel_distance = np.sqrt((center_x - prev_x) ** 2 + (center_y - prev_y) ** 2)
                 
-                # Convert to meters per second, then to km/h
-                # distance_m = pixel_distance / self.pixels_per_meter
-                # time_s = 1 / fps
-                # speed_ms = distance_m / time_s
-                # speed_kmh = speed_ms * 3.6
-                speed_kmh = (pixel_distance / self.pixels_per_meter) * fps * 3.6
+                # IMPROVEMENT 1: Only calculate speed if movement exceeds minimum threshold
+                # This filters out detection jitter from appearing as small speeds
+                if pixel_distance < MIN_PIXEL_MOVEMENT:
+                    # No significant movement detected - treat as 0 speed
+                    # Use aggressive smoothing toward 0
+                    if tracker_id in self.vehicle_speeds:
+                        speed_kmh = 0.9 * self.vehicle_speeds[tracker_id]  # Decay toward 0
+                    else:
+                        speed_kmh = 0.0
+                else:
+                    # Calculate speed from significant movement
+                    speed_kmh = (pixel_distance / pixels_per_meter) * fps * 3.6
+                    
+                    # IMPROVEMENT 2: Apply more conservative smoothing
+                    if tracker_id in self.vehicle_speeds:
+                        # Use 80% old speed, 20% new speed for stability
+                        speed_kmh = 0.8 * self.vehicle_speeds[tracker_id] + 0.2 * speed_kmh
                 
-                # Smooth the speed estimate with exponential moving average
-                if tracker_id in self.vehicle_speeds:
-                    speed_kmh = 0.7 * self.vehicle_speeds[tracker_id] + 0.3 * speed_kmh
+                # IMPROVEMENT 3: Apply deadzone - speeds below threshold treated as stationary
+                if speed_kmh < SPEED_DEADZONE:
+                    speed_kmh = 0.0
                 
                 self.vehicle_speeds[tracker_id] = speed_kmh
             else:
@@ -526,18 +548,18 @@ class TrafficMonitor:
         for tracker_id, vehicle_type, is_emerg in zip(detections.tracker_id, enhanced_vehicle_types, is_emergency):
             tracker_id_int = int(tracker_id)
             speed = vehicle_speeds.get(tracker_id_int, 0.0)
-            speed_str = f" {speed:.0f}km/h" if speed > 1 else ""
+            speed_str = f" {speed:.0f}km/h" if speed > 0.5 else ""
             
             if vehicle_type == 'emergency_vehicle':
-                labels.append(f"🚨 #{tracker_id_int} EMERGENCY{speed_str}")
+                labels.append(f"#{tracker_id_int} EMERGENCY{speed_str}")
             elif vehicle_type in ['bike', 'scooter', 'motorcycle']:
-                labels.append(f"🏍️ #{tracker_id_int} {vehicle_type.upper()}{speed_str}")
+                labels.append(f"#{tracker_id_int} {vehicle_type.upper()}{speed_str}")
             elif vehicle_type == 'car':
-                labels.append(f"🚗 #{tracker_id_int} {vehicle_type.upper()}{speed_str}")
+                labels.append(f"#{tracker_id_int} {vehicle_type.upper()}{speed_str}")
             elif vehicle_type == 'bus':
-                labels.append(f"🚌 #{tracker_id_int} {vehicle_type.upper()}{speed_str}")
+                labels.append(f"#{tracker_id_int} {vehicle_type.upper()}{speed_str}")
             elif vehicle_type == 'truck':
-                labels.append(f"🚚 #{tracker_id_int} {vehicle_type.upper()}{speed_str}")
+                labels.append(f"#{tracker_id_int} {vehicle_type.upper()}{speed_str}")
             else:
                 labels.append(f"#{tracker_id_int} {vehicle_type}{speed_str}")
         
@@ -566,19 +588,19 @@ class TrafficMonitor:
         
         breakdown_parts = []
         if emergency_count > 0:
-            breakdown_parts.append(f"🚨 Emergency: {emergency_count}")
+            breakdown_parts.append(f"Emergency: {emergency_count}")
         if 'bike' in type_counts:
-            breakdown_parts.append(f"🏍️ Bikes: {type_counts['bike']}")
+            breakdown_parts.append(f"Bikes: {type_counts['bike']}")
         if 'scooter' in type_counts:
-            breakdown_parts.append(f"🛵 Scooters: {type_counts['scooter']}")
+            breakdown_parts.append(f"Scooters: {type_counts['scooter']}")
         if 'motorcycle' in type_counts:
-            breakdown_parts.append(f"🏍️ Motorcycles: {type_counts['motorcycle']}")
+            breakdown_parts.append(f"Motorcycles: {type_counts['motorcycle']}")
         if 'car' in type_counts:
-            breakdown_parts.append(f"🚗 Cars: {type_counts['car']}")
+            breakdown_parts.append(f"Cars: {type_counts['car']}")
         if 'bus' in type_counts:
-            breakdown_parts.append(f"🚌 Buses: {type_counts['bus']}")
+            breakdown_parts.append(f"Buses: {type_counts['bus']}")
         if 'truck' in type_counts:
-            breakdown_parts.append(f"🚚 Trucks: {type_counts['truck']}")
+            breakdown_parts.append(f"Trucks: {type_counts['truck']}")
         
         if breakdown_parts:
             type_text = " | ".join(breakdown_parts)
