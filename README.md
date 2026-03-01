@@ -117,7 +117,7 @@ pip install -r requirements.txt
 ### Step 4: Download Sample Video (Optional)
 
 ```bash
-curl -o traffic.jpg "https://ultralytics.com/images/bus.jpg"
+curl -L -o traffic.mp4 "https://videos.pexels.com/video-files/5834623/5834623-hd_1920_1080_25fps.mp4"
 ```
 
 ---
